@@ -1,0 +1,23 @@
+Bob The Destroyer
+100
+86
+86
+1
+2
+2
+2
+4
+1
+0
+Small Dagger
+Strength
+7
+0
+0
+4
+Hunters Bow
+Strenght
+5
+0
+0
+4

@@ -1,0 +1,1164 @@
+package chooseyourownadventure;
+import Monsters.Monster;
+import java.util.ArrayList;
+import java.util.InputMismatchException;
+import java.util.Scanner;
+public class Adventure{
+    private RandomGenerator generator;
+    private Character	player;
+    private Quest quest;
+    private ArrayList<Weapon> questInventory;
+    private Scanner scan;
+    private int gold;
+    private TypeChanger tc;
+    private Monster currentMonster;
+    public Adventure(RandomGenerator g, Character c, Quest q){
+	generator=g;
+	player=c;
+        quest=q;
+        gold=0;
+        scan=new Scanner(System.in);
+        tc=new TypeChanger();
+    }
+    public void beginAdventure(){
+        System.out.println("Choose 4 weapons to bring with you");
+        weaponSelecter();   
+        System.out.println("Choose an amount of gold to bring with you");
+        while(gold<=0){
+            try{
+                gold=scan.nextInt();
+            }catch(InputMismatchException e){
+            }
+        }
+        player.addGold(-gold);
+        System.out.println("This is your last chance to change difficulty do you wish to do so?");
+        String answer=null;
+        while(!(answer.equalsIgnoreCase("yes")||answer.equalsIgnoreCase("no"))){
+            try{
+               answer=scan.nextLine();
+            }catch(InputMismatchException e){
+            }
+        }
+        if(answer.equalsIgnoreCase("yes")){
+            while(answer.equalsIgnoreCase("yes")){
+                try{
+                    answer=scan.nextLine();
+                }catch(InputMismatchException e){
+                }
+            }
+            generator.changeDifficulty(answer);
+        }
+        quest();
+    }
+    private void quest(){
+        displayStuff(quest.getInformation());
+        int currentQuestion=0;
+        while(!quest.questFinished()){
+            Question q=quest.getQuestion(currentQuestion);
+            ArrayList<String> temp=q.getInformation();
+            if(isFight(q)){
+                temp=getFightInfo(q);
+            }
+            displayStuff(temp);
+            
+            displayStuff(q.getOptions());
+            int choice=scan.nextInt();
+            displayStuff(q.getResult(choice));
+            currentQuestion=findNextNumber(q,choice);
+        }
+        
+    }
+    private boolean isFight(Question q){
+        ArrayList<String> strings=q.getInformation();
+        for(String s: strings){
+            if(s.equals("FIGHT")){
+                return true;
+            }
+        }
+        return false;
+    }
+    private ArrayList<String> getFightInfo(Question q){
+        ArrayList<String> info=q.getInformation();
+        ArrayList<String> temp=new ArrayList<>(1);
+        for(String s:info){
+            if(s.substring(0, 14).equals("--Monster is ")){
+                currentMonster=generator.getMonster(s.substring(14));
+                temp.add(s);
+            }else{
+                temp.add(s);
+            }
+        }
+        for(int x=0; x<temp.size();x++){
+            if(temp.get(x).substring(0, 14).equals("--Monster is ")){
+                temp.set(x, "Monster has "+currentMonster.getHealth()+" health");
+            }
+        }
+        return null;
+    }
+    private int findNextNumber(Question q, int choice){
+        ArrayList<String> temp=q.getResult(choice);
+        int nextQuestion = 0;
+        for(String s:temp){
+            if(s.substring(0, 2).equalsIgnoreCase("--")){
+                nextQuestion=tc.changeTypeInt(s.substring(2));
+                break;
+            }
+        }
+        return nextQuestion;
+    }
+    private void weaponSelecter(){
+        ArrayList<Weapon> temp=player.getInventory();
+        int selected=0;
+        while(selected<4){
+            System.out.println(selected);
+            int x=0,idx=-1;
+            for(Weapon w:temp){
+                System.out.println((x+1)+":  "+w.getClass()+" : "+w.getName());
+                x++;
+            }
+            while(idx==-1){
+                try{
+                    idx=scan.nextInt()-1;
+                }catch(InputMismatchException e){
+                }
+            }
+            ArrayList<String> strings=temp.get(idx).toStringArray();
+            for(String s:strings){
+                System.out.println(s);
+            }
+            System.out.println("Do you Choose this or do you wish to Return?");
+            String answer=null;
+            while(!(answer.equalsIgnoreCase("Choose")||answer.equalsIgnoreCase("Return"))){
+                try{
+                    answer=scan.nextLine();
+                }catch(InputMismatchException e){
+                }
+            }
+            answer=answer.toLowerCase();
+            switch(answer){
+                case "choose":
+                    player.removeFromInventory(temp.get(idx).getName());
+                    temp.remove(idx);
+                    selected++;
+                    break;
+                case "return":
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    public int getDifficulty(){
+        return generator.getDifficulty();
+    }
+    private void displayStuff(ArrayList<String> strings){
+        for(String s:strings){
+            if(s.equals("PAUSE")){
+                scan.nextLine();
+            }else if(s.equals("FIGHT")){
+            }else if(!(s.substring(0, 2).equalsIgnoreCase("--"))){
+                System.out.println(s);
+            }
+        }
+        scan.nextLine();
+    }
+}
+package chooseyourownadventure;
+
+import java.util.ArrayList;
+
+/**
+ *
+ * @author Timothy
+ */
+public class Blade extends Weapon{
+    private String requiredSkill;
+    private int requiredLvl, skillLvl;
+    public Blade(String name, int dmg, int lvl, int maxLvl){
+        super(name,"Blade", dmg, lvl, maxLvl);
+        requiredSkill="Strength";
+        requiredLvl=maxLvl/2;
+        skillLvl=(maxLvl*2)+(dmg/2)-4;
+    }
+    public Blade(String name, int dmg, int lvl, int exp, int maxLvl){
+        super(name,"Blade", dmg, lvl, exp, maxLvl);
+        requiredSkill="Strength";
+    }
+    public String getSkill(){
+        return requiredSkill;
+    }
+    public int getRequiredLvl(){
+        return requiredLvl;
+    }
+    public int getSkillLvl(){
+        return skillLvl;
+    }
+    @Override
+    public ArrayList<String> toStringArray(){
+        ArrayList<String> strings=super.toStringArray();
+        strings.add(1, requiredSkill);
+        return strings;
+    }
+}
+package chooseyourownadventure;
+
+import java.util.ArrayList;
+
+public class Bow extends Weapon{
+    private String requiredSkill;
+    private int requiredLvl, skillLvl;
+    public Bow(String name, int dmg, int lvl, int maxLvl){
+        super(name,"Bow", dmg, lvl, maxLvl);
+        requiredSkill="Dexterity";
+        requiredLvl=maxLvl/2;
+        skillLvl=(maxLvl*2)+(dmg/2)-4;
+    }
+    public Bow(String name, int dmg, int lvl, int exp, int maxLvl){
+        super(name,"Bow", dmg, lvl, exp, maxLvl);
+        requiredSkill="Strenght";
+    }
+    public String getSkill(){
+        return requiredSkill;
+    }
+    public int getRequiredLvl(){
+        return requiredLvl;
+    }
+    public int getSkillLvl(){
+        return skillLvl;
+    }
+    public ArrayList<String> toStringArray(){
+        ArrayList<String> strings=super.toStringArray();
+        strings.add(1, requiredSkill);
+        return strings;
+    }
+}
+package chooseyourownadventure;
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class Character {
+    private String myName;
+    private int lvl, xp, skillGroup, health, strength, dexterity, blade, archery, gold;
+	private ArrayList<Weapon> inventory;
+	private Weapon[] equipped;
+    public Character(String name){
+        myName=name;
+        lvl=0;
+        skillGroup=0;
+        health=89;
+        levelUp();
+	equipped=null;
+        equipped[0]=new Blade("Small Dagger", 7, 0, 5);
+        equipped[1]=new Blade("Hunters Bow", 5, 0, 5);
+    }
+    public Character (String name, int gold, int hitPoints, int str, int dex, int bl, int arch, int level, int exp){
+        myName=name;
+        this.gold=gold;
+        lvl=level;
+        xp=exp;
+        health=hitPoints;
+        strength=str;
+        dexterity=dex;
+        blade=bl;
+        archery=arch;
+	equipped=new Weapon[2];
+    }
+    private void levelUp(){
+        Scanner scan=new Scanner(System.in);
+        int skillPoints=getSkillPoints();
+        int[] skillBuffer=new int[5];
+        skillBuffer[0]=1;
+        boolean lvled=false;
+        String answer;
+        System.out.println("Apply level up to "+(lvl+1));
+        for(int x=skillPoints; x>0;x--){
+            System.out.println("Skill Points remaining: "+x);
+            System.out.println("\nApply next skill Point\n");
+            System.out.println("Health   : "+(health+skillBuffer[0]));
+            System.out.println("Strength : "+(strength+skillBuffer[1]));
+            System.out.println("Dexterity: "+(dexterity+skillBuffer[2]));
+            System.out.println("Blade    : "+(blade+skillBuffer[3]));
+            System.out.println("Archery  : "+(archery+skillBuffer[4]));
+            answer=scan.next().toLowerCase();
+            switch(answer){
+                case "health":
+                    skillBuffer[0]++;
+                    break;
+                case "strength":
+                    skillBuffer[1]++;
+                    break;
+                case "dexterity":
+                    skillBuffer[2]++;
+                    break;
+                case "blade":
+                    skillBuffer[3]++;
+                    break;
+                case "archery":
+                    skillBuffer[4]++;
+                    break;
+                default:
+                    x++;
+                    break;
+            }
+        }
+        System.out.println("\nApply next skill Point\n");
+        System.out.println("Health   : "+(health+skillBuffer[0]));
+        System.out.println("Strength : "+(strength+skillBuffer[1]));
+        System.out.println("Dexterity: "+(dexterity+skillBuffer[2]));
+        System.out.println("Blade    : "+(blade+skillBuffer[3]));
+        System.out.println("Archery  : "+(archery+skillBuffer[4]));
+        System.out.println("\n\n\nAre you absolutely sure thats where you want to spend your points?");
+        answer=scan.next().toLowerCase();
+        switch(answer){
+            case "yes":
+                health=skillBuffer[0];
+                strength=skillBuffer[1];
+                dexterity=skillBuffer[2];
+                blade=skillBuffer[3];
+                archery=skillBuffer[4];
+                lvled=true;
+                break;
+            default:
+                skillBuffer=new int[5];
+                levelUp();
+                break;
+        }
+        if(lvled){
+            lvl++;
+            skillGroup=lvl/10;
+        }
+    }
+    private int getSkillPoints(){
+        int skillPoints;
+        switch(skillGroup){
+            case 0:
+                skillPoints=10;
+                break;
+            case 1:
+                skillPoints=9;
+                break;
+            case 2:
+                skillPoints=8;
+                break;
+            case 3:
+                skillPoints=7;
+                break;
+            case 4:
+                skillPoints=6;
+                break;
+            default:
+                if(skillGroup<10){
+                    skillPoints=5;
+                }else if(skillGroup<200){
+                    skillPoints=(5-skillGroup%10);
+                }else{
+                    skillPoints=0;
+                }
+        }
+        return skillPoints;
+    }
+	public void addToInventory(Weapon weapon){
+            inventory.add(weapon);
+	}
+	public void addToInventory(ArrayList<Weapon> weaponsToAdd){
+		for(Weapon wep:weaponsToAdd){
+			addToInventory(wep);
+		}
+	}
+	public void addMainWeapon(Weapon weapon){
+		if(weapon instanceof Blade){
+                    if(equipped == null){
+                        inventory.add(equipped[0]);
+                        equipped[0]=weapon;
+                    }else{
+                        
+                    }
+                    equipped[0]=weapon;
+		}else{
+                    equipped[1]=weapon;
+		}
+	}
+    public String getName(){
+        return myName;
+    }
+    public ArrayList<String> toStringArray(){
+        ArrayList<String> strings=new ArrayList<>(1);
+        ArrayList<String> temp=null;
+        strings.add(myName);
+        strings.add(gold+"");
+        strings.add(health+"");
+        strings.add(strength+"");
+        strings.add(dexterity+"");
+        strings.add(blade+"");
+        strings.add(archery+"");
+        strings.add(lvl+"");
+        strings.add(xp+"");
+        for(Weapon w:equipped){
+            try{
+                temp=w.toStringArray();
+            }catch(NullPointerException e){
+            }
+            try{
+            for(String s:temp){
+                    try{
+                        strings.add(s);
+                    }catch(NullPointerException e){
+                    }
+                }
+            }catch(NullPointerException e){
+            }
+        }
+        try{
+            for(Weapon w:inventory){
+                try{
+                    temp=w.toStringArray();
+                }catch(NullPointerException e){
+                }
+                try{
+                    for(String s:temp){
+                        try{
+                            strings.add(s);
+                        }catch(NullPointerException e){
+                        }
+                    }
+                }catch(NullPointerException e){
+                }
+            }
+        }catch(NullPointerException e){
+        }
+        return strings;
+    }
+	public ArrayList<Weapon> getInventory(){
+		return inventory;
+	}
+	public ArrayList<Weapon> getMeleeInventory(){
+		ArrayList<Weapon> meleeInventory=new ArrayList<>(1);
+		for(Weapon w:inventory){
+			if(w instanceof Blade){
+				meleeInventory.add(w);
+			}
+		}
+                return meleeInventory;
+	}
+	public ArrayList<Weapon> getRangedInventory(){
+		ArrayList<Weapon> rangedInventory=new ArrayList<>(1);
+		for(Weapon w:inventory){
+			if(w instanceof Bow){
+				rangedInventory.add(w);
+			}
+		}
+                return rangedInventory;
+	}
+        public void removeFromInventory(String name){
+            for(int x=0;x<inventory.size();x++){
+                if(inventory.get(x).getName().equalsIgnoreCase(name)){
+                    inventory.remove(x);
+                    break;
+                }
+            }
+        }
+        public void addGold(int g){
+            gold+=g;
+        }
+        public int getHealthRegenRate(String location){
+            int regenRate=0;
+            if(location.equalsIgnoreCase("tavern")){
+                regenRate=(health/10)*4;
+            }else{
+                regenRate=(health/10)*2;
+            }
+            return regenRate;
+        }
+}
+package chooseyourownadventure;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.InputMismatchException;
+import java.util.Scanner;
+
+/*@author Timothy*/
+public class ChooseYourOwnAdventure {
+    private static Character[] savedGames;
+    private static final int MAXCHARS=5;
+    public static void main(String[] args) throws FileNotFoundException{
+        Scanner scan=new Scanner(System.in);	
+        String[] savedGameNames;
+        savedGameNames = retrieveSaves();
+	String[] mainMenu={"1: New Game","2: Load Game","3: Help", "4: Exit"};
+	for(String menuOption: mainMenu){
+            System.out.println(menuOption);
+	}
+        int selectedCharacter=-1;
+	String answer="default";
+        try{
+            answer=scan.nextLine();
+        }catch(InputMismatchException e){
+        }
+        switch(answer){
+            case "1":
+            case "New Game":
+                int idxToSave=-1;
+                for(int x=0;x<savedGames.length;x++){
+                    if(savedGameNames[x].equalsIgnoreCase("empty")){
+                        idxToSave=x;
+                        break;
+                    }
+                }
+                if(idxToSave==-1){
+                    System.out.println("Which Save would you like to delete?");
+                    for(int x=0;x<savedGameNames.length;x++){
+                        System.out.println((x+1)+":"+savedGameNames[x]);
+                    }
+                }
+                System.out.println("Name your Character");
+                savedGames[idxToSave]=new Character(scan.nextLine());
+                selectedCharacter=idxToSave;
+                FileWriter fw=new FileWriter("SavedGame"+idxToSave+".txt");
+                ArrayList<String> strings=savedGames[idxToSave].toStringArray();
+                fw.write(strings);
+                break;
+            case "2":
+            case "Load Game":
+                for(int x=0;x<savedGameNames.length;x++){
+                    System.out.println((x+1)+":"+savedGameNames[x]);
+                }
+                try{
+                    selectedCharacter=scan.nextInt();
+                }catch(InputMismatchException e){
+                }
+                break;
+            case "3":
+            case "Help":
+		FileReader help=new FileReader("Help.txt");
+		TypeChanger tc=new TypeChanger();
+		ArrayList<String>buffer=new ArrayList<>(1);
+		buffer.add("empty");
+		try{
+                    buffer = help.readFile();
+		}catch(FileNotFoundException e){
+		}
+		buffer=tc.commentRemover(buffer);
+		for(String str:buffer){
+                    if(!str.substring(0, 5).equals("PAUSE")){
+                        System.out.println(str);
+                    }else{
+                        try {
+                            scan.nextLine();
+                        } catch (InputMismatchException ex) {
+                        }
+                        System.out.println("\n\n\n\n");
+                    }
+		}
+                break;
+            case "4":
+            case "Exit":
+                System.exit(1);
+        }
+        if(selectedCharacter==-1){
+            System.exit(2);
+        }
+        FileReader help=new FileReader("QuestList.txt");
+		TypeChanger tc=new TypeChanger();
+		ArrayList<String>buffer=new ArrayList<>(1);
+		buffer.add("empty");
+		try{
+            buffer = help.readFile();
+		}catch(FileNotFoundException e){
+		}
+		buffer=tc.commentRemover(buffer);
+        for(String s:buffer){
+            System.out.println(s);
+        }
+        int selectedQuest=-1;
+        while(selectedQuest==-1){
+            try{
+                selectedQuest=scan.nextInt();
+            }catch(InputMismatchException e){
+            }
+        }
+		
+    }
+    private static String[] retrieveSaves() throws FileNotFoundException{
+        Character[] characters = new Character[5];
+        for(int x=0;x<MAXCHARS;x++){
+            FileReader fr=new FileReader("SavedGame"+x+".txt");
+            ArrayList<String> buffer = new ArrayList<>(1);
+            buffer.add("empty");
+            try{
+                buffer = fr.readFile();
+            }catch(FileNotFoundException e){
+            }
+            characters[x]=toCharacter(buffer);
+        }
+        String[] characterNames=new String[MAXCHARS];
+        for(int x=0;x<characterNames.length;x++){
+            characterNames[x]="Empty";
+        }
+        for(int x=0;x<characters.length;x++){
+            if(characters[x]!=null){
+                characterNames[x]=characters[x].getName();
+            }
+        }
+        savedGames=characters;
+        return characterNames;
+    }
+    private static Character toCharacter(ArrayList<String> strings){
+        if(strings.get(0).equalsIgnoreCase("empty")){
+            return null;
+        }
+	TypeChanger tc=new TypeChanger();
+        int y=-1;
+        for(int z=0;z<strings.size();z++){
+            try{
+                if(strings.get(z).charAt(0)=='#'||strings.get(z).equalsIgnoreCase("++++++")||strings.get(z).equalsIgnoreCase("------")){
+                    strings.remove(z);
+                    z--;
+                }
+            }catch(StringIndexOutOfBoundsException e){
+            }
+        }
+	Character temp=new Character(strings.get(0),tc.changeTypeInt(strings.get(1)),tc.changeTypeInt(strings.get(2)),tc.changeTypeInt(strings.get(3)),tc.changeTypeInt(strings.get(4)),tc.changeTypeInt(strings.get(5)),tc.changeTypeInt(strings.get(6)),tc.changeTypeInt(strings.get(7)),tc.changeTypeInt(strings.get(8)));
+        for(int x=0;x<9;x++){
+            strings.remove(0);
+	}
+	ArrayList<Weapon> weapons=new ArrayList<>(1);
+	for(int x=0;x<strings.size();x++){
+            String[] weaponStrings=new String[6];
+            for(int z=0;z<6;z++){
+                weaponStrings[z]=strings.get(0);
+		strings.remove(0);
+            }
+            weapons.add(tc.weaponMaker(weaponStrings));
+	}
+	for(int x=0;x<2;x++){
+            temp.addMainWeapon(weapons.get(0));
+            weapons.remove(0);
+	}
+        temp.addToInventory(weapons);
+	return temp;
+    }
+    
+}
+package chooseyourownadventure;
+/*@author Timothy*/
+public class driver {
+    public static void main(String[] args){
+        String[] strings={"This","is","a","test"};
+        FileWriter tester=new FileWriter("test.txt");
+        tester.write(strings);       
+    }
+}
+package chooseyourownadventure;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Scanner;
+public class FileReader{
+    String file;
+    public FileReader(String fileLocation){
+        file=fileLocation;
+    }
+    public ArrayList<String> readFile() throws FileNotFoundException{
+        FileInputStream fis=new FileInputStream(file);
+        ArrayList<String> buffer = new ArrayList(1);
+        Object o=new Object();
+        Scanner scanner;
+        scanner = new Scanner(fis);
+        try {
+            while (scanner.hasNextLine()){
+                buffer.add(scanner.nextLine());
+            }
+        }finally{
+            scanner.close();
+        }
+        return buffer;
+    }
+}package chooseyourownadventure;
+
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+
+public class FileWriter {
+    private static String fileName="SavedGame2.txt";
+    public FileWriter(String name){
+        fileName=name;
+    }
+    public void write(String s){
+        Writer out = null;
+        try {
+            out = new OutputStreamWriter(new FileOutputStream(fileName));
+        } catch (FileNotFoundException ex) {
+        }
+       BufferedWriter writer=new BufferedWriter(out);
+        try {
+            try {
+                writer.write(s);
+                writer.newLine();
+            } catch (IOException ex) {
+            }
+        }
+        finally {
+            try {
+                writer.close();
+            } catch (IOException ex) {
+            }
+        }
+    }
+    public void write(ArrayList<String> strings){
+        Writer out = null;
+        try {
+            out = new OutputStreamWriter(new FileOutputStream(fileName));
+        } catch (FileNotFoundException ex) {
+        }
+        BufferedWriter writer=new BufferedWriter(out);
+        try{
+            for(String s:strings){
+                try {
+                    writer.write(s);
+                    writer.newLine();
+                } catch (IOException ex) {
+                }
+            }
+        }finally {
+            try {
+                writer.close();
+            } catch (IOException ex) {
+            }
+        }
+    }
+    public void write(String[] strings){
+        Writer out = null;
+        try {
+            out = new OutputStreamWriter(new FileOutputStream(fileName));
+        } catch (FileNotFoundException ex) {
+        }
+        BufferedWriter writer=new BufferedWriter(out);
+        try{
+            for(String s:strings){
+                try {
+                    writer.write(s);
+                    writer.newLine();
+                } catch (IOException ex) {
+                }
+            }
+        }finally {
+            try {
+                writer.close();
+            } catch (IOException ex) {
+            }
+        }
+    }
+}
+package chooseyourownadventure;
+import java.util.ArrayList;
+/*@author timothy*/
+public class Quest {
+    private ArrayList<Question> questions;
+    private ArrayList<String> information;
+    private boolean questOver;
+    public Quest(ArrayList<Question> q, ArrayList<String> i){
+        questions=q;
+        information=i;
+    }
+    public Question getQuestion(int q){
+        return questions.get(q);
+    }
+    public ArrayList<String> getInformation(){
+        return information;
+    }
+    public ArrayList<String> getResults(int question, int choice){
+        return questions.get(question).getResult(choice);
+    }
+    public boolean questFinished(){
+        return questOver;
+    }
+}
+package chooseyourownadventure;
+
+import java.util.ArrayList;
+
+public class Question{
+    private ArrayList<String> information;
+    private ArrayList<String> options;
+    private ArrayList<String> results;
+    private final int number;
+    public Question(ArrayList<String> strings, int num){
+    	information=new ArrayList<>(1);
+	options=new ArrayList<>(1);
+	results=new ArrayList<>(1);
+        number=num;
+	for(String s:strings){
+            if(s.charAt(0)=='@'){
+                options.add(s.substring(1));
+            }else if(s.charAt(1)=='$'){
+            	results.add(s.substring(1));
+            }else{
+		information.add(s);
+            }
+	}
+    }
+    public ArrayList<String> getInformation(){
+        return information;
+    }
+    public ArrayList<String> getOptions(){
+        int currentOption=1;
+        for(int x=0; x<options.size();x++){
+            if(options.get(x).charAt(0)!=currentOption){
+                options.add(x,"\n");
+                currentOption++;
+            }else{
+                options.set(x, options.get(x).substring(1));
+            }
+        }
+        return options;
+    }
+    public ArrayList<String> getResult(int choice){
+        ArrayList<String> selectedResult=new ArrayList<>(1);
+        for(String s:results){
+            if(s.charAt(0)==choice){
+                selectedResult.add(s.substring(choice));
+            }
+        }
+        return selectedResult;
+    }
+    public int getNumber(){
+        return number;
+    }
+}
+package chooseyourownadventure;
+
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+
+public class QuestMaker{
+    private FileReader fr;
+    private TypeChanger tc;
+    public QuestMaker(String questLoc){
+    	fr=new FileReader(questLoc);
+    	tc=new TypeChanger();
+    }
+    public void newFileReader(String questLoc){
+    	fr=new FileReader(questLoc);
+    }
+    public Quest createQuest(){
+        ArrayList<String> buffer=new ArrayList<>(1);
+        try{
+            buffer = fr.readFile();
+        }catch(FileNotFoundException e){
+        }
+	buffer=tc.commentRemover(buffer);
+        int question=0;
+        ArrayList<String> temp=new ArrayList<>(1);
+        ArrayList<Question> tempQuestions=new ArrayList<>(1);
+        ArrayList<String> info=new ArrayList<>(1);
+        for(int x=0;x<buffer.size();x++){
+            if(question==0){
+                if(!buffer.get(x).equals("******")){
+                    info.add(buffer.get(x));
+                }else{
+                    question++;
+                }
+            }else{
+                if(buffer.get(x).equals("******")){
+                   tempQuestions.add(new Question(temp, question));
+                   temp=new ArrayList<>(1);
+                   question++;
+                }else{
+                    temp.add(buffer.get(x));
+                }
+            }
+        }
+        Quest newQuest=new Quest(tempQuestions, info);
+        return newQuest;
+    }
+}
+package chooseyourownadventure;
+/*@author Timothy*/
+import Monsters.*;
+public class RandomGenerator {
+    private int difficulty;
+    public RandomGenerator(String difficult){
+        changeDifficulty(difficult);
+    }
+    public void changeDifficulty(String difficult){
+        switch(difficult){
+            case "easy":
+                difficulty=1;
+                break;
+            case "medium":
+                difficulty=2;
+                break;
+            case "hard":
+                difficulty=3;
+                break;
+            case "insanity":
+                difficulty=4;
+                break;
+            default:
+                difficulty=1;
+                break;
+        }
+    }
+    public int difficultyGenerator(int charlvl1){
+        
+        return 4;
+    }
+    public int getDifficulty(){
+        return difficulty;
+    }
+    public Monster getMonster(String monsterType){
+        Monster m;
+        return null;
+    }
+    
+    
+    
+}
+package chooseyourownadventure;
+
+import java.util.ArrayList;
+
+/* @author Timothy*/
+public class TypeChanger {
+    public int changeTypeInt(String s){
+        int sum=0;
+        for(int x=0;x<s.length();x++){
+            sum+=(changeTypeInt(s.charAt(x))*Math.pow(10, (s.length()-(x+1))));
+        }
+        return sum;
+    }
+    public int changeTypeInt(char c){
+        switch(c){
+            case '0':
+                return 0;
+            case '1':
+                return 1;
+            case '2':
+                return 2;
+            case '3':
+                return 3;
+            case '4':
+                return 4;
+            case '5':
+                return 5;
+            case '6':
+                return 6;
+            case '7':
+                return 7;
+            case '8':
+                return 8;
+            case '9':
+                return 9;
+            default:
+                return -1;
+        }
+    }
+	public String changeTypeString(int x){
+		return x+"";
+	}
+        public ArrayList<String> changeTypeString(Character c){
+            ArrayList<String> strings=new ArrayList<>(1);
+            strings.add(c.getName());
+            return null;
+        }
+	public char changeTypeChar(int x){
+		String temp="012346789";
+		return temp.charAt(x);
+	}
+	public Weapon weaponMaker(String[] strings){
+                Weapon weapon=null;
+		if(strings[1].equalsIgnoreCase("Strength")){
+			weapon=new Blade(strings[0],changeTypeInt(strings[2]),changeTypeInt(strings[3]),changeTypeInt(strings[4]),changeTypeInt(strings[5]));
+		}else{
+			weapon=new Bow(strings[0],changeTypeInt(strings[2]),changeTypeInt(strings[3]),changeTypeInt(strings[4]),changeTypeInt(strings[5]));
+		}
+		return weapon;
+	}
+	public ArrayList<String> commentRemover(ArrayList<String> strings){
+		for(int x=0;x<strings.size();x++){
+			if(strings.get(x).charAt(0)=='#'){
+				strings.remove(x);
+				x--;
+			}
+		}
+		return strings;
+	}
+}
+package chooseyourownadventure;
+
+import java.util.ArrayList;
+
+public class Weapon {
+    private int damage, xp, level;
+    private int[] xpLvls;
+    private String myName, type;
+    public Weapon(String name, String t, int dmg, int lvl, int maxLvl){
+        myName=name;
+        type=t;
+        damage=dmg;
+        level=lvl;
+        xp=0;
+        xpLvls=new int[maxLvl];
+        xpLvls[0]=100;
+        for(int x=1;x<xpLvls.length;x++){
+            xpLvls[x]=(int) (xpLvls[x-1]*(.20));
+        }
+    }
+    public Weapon(String name, String t, int dmg, int lvl, int exp, int maxLvl){
+        myName=name;
+        type=t;
+        damage=dmg;
+        level=lvl;
+        xp=exp;
+        xpLvls=new int[maxLvl+1];
+        xpLvls[0]=100;
+        for(int x=1;x<xpLvls.length;x++){
+            xpLvls[x]=(int) (xpLvls[x-1]*(.20));
+        }
+    }
+    public void addXP(int gained){
+        xp+=gained;
+        if(xp>=xpLvls[level]){
+            lvlUp();
+        }
+    }
+    private void lvlUp(){
+        level++;
+        damage+=damage/2;
+        xp=0;
+    }
+    public String getName(){
+        return myName;
+    }
+    public int getDamage(){
+        return damage;
+    }
+    public int getLvl(){
+        return level;
+    }
+    public int getXP(){
+        return xp;
+    }
+    public ArrayList<String> toStringArray(){
+        ArrayList<String> strings=new ArrayList<>(1);
+        strings.add(myName);
+        strings.add(damage+"");
+        strings.add(level+"");
+        strings.add(xp+"");
+        strings.add((xpLvls.length-1)+"");
+        return strings;
+    }
+    public String getType(){
+        return type;
+    }
+    public int getPrice(){
+        return (2*(level+xpLvls.length)+3*((xpLvls[level]-xp)+xpLvls[level])*damage);
+    }
+}
+package Monsters;
+/*@author Timothy*/
+public class Bandit extends Monster{
+    public Bandit(String n, int h, int dmg, int d){
+        super(n,h,dmg,d);
+    }
+}
+package Monsters;
+/*@author Timothy*/
+public class Bear extends Monster {
+    public Bear(String n, int h, int dmg, int d){
+        super(n,h,dmg,d);
+    }
+}
+package Monsters;
+/*@author Timothy*/
+public class Dragon extends Monster{
+    public Dragon(String n, int h, int dmg, int d){
+        super(n,h,dmg,d);
+    }
+}
+package Monsters;
+/*@author Timothy*/
+public class Giant extends Monster{
+    public Giant(String n, int h, int dmg, int d){
+        super(n,h,dmg,d);
+    }
+}
+package Monsters;
+/*@author Timothy*/
+public class Goblin extends Monster{
+    public Goblin(String n, int h, int dmg, int d){
+        super(n,h,dmg,d);
+    }
+}
+package Monsters;
+/*@author Timothy*/
+public class Monster {
+    private int health, damage, difficulty;
+    private String name;
+    public Monster(String n, int h, int dmg, int d){
+        name=n;
+        health=h;
+        damage=dmg;
+        difficulty=d;
+    }
+    public int getHealth(){
+        return health;
+    }
+}
+package Monsters;
+/*@author Timothy*/
+public class Ogre extends Monster{
+    public Ogre(String n, int h, int dmg, int d){
+        super(n,h,dmg,d);
+    }
+}
+package Monsters;
+/*@author Timothy*/
+public class Wolf extends Monster {
+    public Wolf(String n, int h, int dmg, int d){
+        super(n,h,dmg,d);
+    }
+}
+package Tavern;
+/*@author Timothy*/
+public class GamblingTable {
+    
+}
+package Tavern;
+/*@author Timothy*/
+public class Shop {
+    private int generosity;
+    public Shop(String difficulty, int charLvl){
+        
+    }
+}
+package Tavern;
+/*@author Timothy*/
+public class Tavern {
+    private String tavernName;
+    private GamblingTable gamblingTable;
+    private TavernKeep tavernKeep;
+    private Shop shop;
+    private final int ROOMCOST=20;
+    public Tavern(String difficulty, int charLvl){
+        tavernName="The Restfull Giant";
+        tavernKeep=new TavernKeep();
+        gamblingTable=new GamblingTable();
+        shop=new Shop(difficulty, charLvl);
+    }
+    public int getRoomCost(){
+        return ROOMCOST;
+    }
+    
+}
+package Tavern;
+/*@author Timothy*/
+public class TavernKeep {
+    
+}
