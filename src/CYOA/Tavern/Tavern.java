@@ -1,6 +1,6 @@
 package CYOA.Tavern;
 import CYOA.Tavern.GamblingTable.GamblingTable;
-import CYOA.Adventure.Character;
+import CYOA.Adventure.Adventurer;
 import CYOA.ErrorCounter;
 import java.util.Scanner;
 /*@author Timothy*/
@@ -8,13 +8,13 @@ public class Tavern {
     private static ErrorCounter errorCounts;
     private String tavernName;
     private GamblingTable gamblingTable;
-    private Character character;
+    private Adventurer character;
     private TavernKeep tavernKeep;
     private Shop shop;
     private final int ROOMCOST=20;
     private Scanner scan;
     private String difficulty;
-    public Tavern(String diff, Character c){
+    public Tavern(String diff, Adventurer c){
         errorCounts=new ErrorCounter();
         tavernName="The Restfull Giant";
         tavernKeep=new TavernKeep();

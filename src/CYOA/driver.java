@@ -7,6 +7,7 @@ public class driver {
     public static void main(String[] args){
         String[] strings={"This","is","a","test"};
         FileWriter tester=new FileWriter("test.txt");
-        tester.write(strings);       
+        tester.write(strings);   
+        System.out.println(strings[12]);
     }
 }

@@ -1,13 +1,13 @@
 package CYOA.Tavern.GamblingTable.Pig;
 import java.util.Scanner;
-import CYOA.Adventure.Character;
+import CYOA.Adventure.Adventurer;
 import CYOA.ErrorCounter;
 public class PigDice {
     private ErrorCounter errorCounts;
     private PigPlayer[] players;
     private PigDealer dealer;
-    private Character player;
-    public PigDice(Character c){
+    private Adventurer player;
+    public PigDice(Adventurer c){
         player=c;
         players=new PigPlayer[1];
         players[0]=new PigPlayer(c.getName());

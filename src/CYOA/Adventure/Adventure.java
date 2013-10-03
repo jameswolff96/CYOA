@@ -11,14 +11,14 @@ import java.util.Scanner;
 public class Adventure{
     private RandomGenerator generator;
     private static ErrorCounter errorCounts;
-    private Character	player;
+    private Adventurer	player;
     private Quest quest;
     private ArrayList<Weapon> questInventory;
     private Scanner scan;
     private int gold;
     private TypeChanger tc;
     private Monster currentMonster;
-    public Adventure(RandomGenerator g, Character c, Quest q){
+    public Adventure(RandomGenerator g, Adventurer c, Quest q){
 	generator=g;
 	player=c;
         quest=q;

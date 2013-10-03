@@ -1,5 +1,5 @@
 package CYOA.Tavern.GamblingTable.BlackJack;
-import CYOA.Adventure.Character;
+import CYOA.Adventure.Adventurer;
 import java.util.ArrayList;
 import java.util.Scanner;
 public class BlackJack {
@@ -9,7 +9,7 @@ public class BlackJack {
     private String playerName;
     private static int bet, playerGold;
     private int turnCount;
-    public BlackJack(Character character) {
+    public BlackJack(Adventurer character) {
         players=new ArrayList<>();
         players.add(new Decks(true));
         playerName=character.getName();

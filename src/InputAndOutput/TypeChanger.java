@@ -2,7 +2,7 @@ package InputAndOutput;
 
 import CYOA.Adventure.Blade;
 import CYOA.Adventure.Bow;
-import CYOA.Adventure.Character;
+import CYOA.Adventure.Adventurer;
 import CYOA.Adventure.Weapon;
 import java.util.ArrayList;
 
@@ -44,7 +44,7 @@ public class TypeChanger {
 	public String changeTypeString(int x){
 		return x+"";
 	}
-        public ArrayList<String> changeTypeString(Character c){
+        public ArrayList<String> changeTypeString(Adventurer c){
             ArrayList<String> strings=new ArrayList<>(1);
             strings.add(c.getName());
             return null;
