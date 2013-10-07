@@ -1,4 +1,5 @@
 package chooseyourownadventure;
+
 /*@author Timothy*/
 public class RandomGenerator {
     private int difficulty;
