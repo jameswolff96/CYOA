@@ -1,5 +1,0 @@
-        System.out.println("Choose Your Adventure!");
-        System.out.println("1) The Journey for Gold");
-        System.out.println("2) The Quest to Kill the Dragon");
-        System.out.println("3) The Hunt for the Lost Artifact");
-        int choice=scan.nextInt();
