@@ -1,0 +1,26 @@
+#Lines with @ represent an option the number being the option
+#Lines with $ represent a result the nubmer being the result
+#both options and results may be more than one line just keep the number the same
+The Journey for Gold
+/*insert background info here
+
+
+
+
+
+
+
+*/
+******
+/*question info*/
+@1option 1
+@2option 2
+@3option 3
+.....
+@4option n
+$1result 1
+$1result 1 cont
+$2result 2
+$3result 3
+.....
+$nresult n
